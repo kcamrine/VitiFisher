@@ -12,11 +12,10 @@
 ### now lets discuss the input in more detail
 
 # this next file is file a. It never changes unless pathway annotations are updated
-genes.annotations <- read.table("vitisnet_funcCats_clean.txt",sep="\t",colClasses=rep("character",2),header=F)
-colnames(genes.annotations) <- c("genename","category")
+annotation.file = "vitisnet_funcCats_clean.txt"
 # this next file is file b. It never changes unless gene names change. If they do, then
 # you must also update file a
-vitis.genenames <- as.character(read.table("vitis.genenames.txt")[,2])
+genename.list = "vitis.genenames.txt"
 # this is the variable character in the list of files, could just be one file
 # if you don't have more than one gene list
 groups <- c("C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11",
@@ -27,6 +26,10 @@ groups <- c("C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11",
 ####################
 
 library('plyr')
+VitiFisher <- function(genename.list="vitis.genenames.txt",groups,annotation.file="vitisnet_funcCats_clean.txt"){
+genes.annotations <- read.table(annotation.file,sep="\t",colClasses=rep("character",2),header=F)
+colnames(genes.annotations) <- c("genename","category")
+vitis.genenames <- as.character(read.table(genename.list)[,2])
 for(i in 1:length(groups)){
     which.genes <- read.table(paste("clusters",groups[i],"genelist.txt",sep="."),header=F,colClasses="character")[,1]
     which.genes <- as.factor(as.numeric(vitis.genenames %in% which.genes))
@@ -73,4 +76,5 @@ for(i in 1:length(groups)){
     filename = paste("clusters",groups[i],"genelist.enrichments.txt",sep=".")
     sigtallysall <- cbind(sigtallysall,"adjusted.p"=p.adjust(sigtallysall[,2]))
     write.table(file=filename,sigtallysall)
+}
 }
