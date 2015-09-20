@@ -18,8 +18,11 @@ annotation.file = "vitisnet_funcCats_clean.txt"
 genename.list = "vitis.genenames.txt"
 # this is the variable character in the list of files, could just be one file
 # if you don't have more than one gene list
-groups <- c("C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11",
+#groups <- c("C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11",
             "C12","C13","C14","C15","C16","C17","C18","C19","C20","C21","C22","C23")
+
+groups <- c("DIM1_positive","DIM1_negative","DIM2_positive","DIM2_negative")
+
 # change the "paste" command inside the loop to match the filenames, 
 # change the "filename" structure at the end of the loop to match what you want your output to look like
 # and you're set... run this bad boy
@@ -31,7 +34,8 @@ genes.annotations <- read.table(annotation.file,sep="\t",colClasses=rep("charact
 colnames(genes.annotations) <- c("genename","category")
 vitis.genenames <- as.character(read.table(genename.list)[,2])
 for(i in 1:length(groups)){
-    which.genes <- read.table(paste("clusters",groups[i],"genelist.txt",sep="."),header=F,colClasses="character")[,1]
+#    which.genes <- read.table(paste("clusters",groups[i],"genelist.txt",sep="."),header=F,colClasses="character")[,1]
+     which.genes <- read.csv(paste(groups[i],"csv",sep="."),header=F,colClasses="character")[,1]
     which.genes <- as.factor(as.numeric(vitis.genenames %in% which.genes))
     names(which.genes) <- vitis.genenames
     functional.category.counts <- rep(0,length(table(genes.annotations$category)))
@@ -73,8 +77,12 @@ for(i in 1:length(groups)){
     rownames(sigtallysall) <-c(1:length(sigtallysall[,1]))
     colnames(sigtallysall) <-c("category","p.value",
                                "count.in.category","count.in.comparison")
-    filename = paste("clusters",groups[i],"genelist.enrichments.txt",sep=".")
+#    filename = paste("clusters",groups[i],"genelist.enrichments.txt",sep=".")
+     filename = paste(groups[i],"enrichments.txt",sep=".")
     sigtallysall <- cbind(sigtallysall,"adjusted.p"=p.adjust(sigtallysall[,2]))
     write.table(file=filename,sigtallysall)
 }
 }
+
+## call the function :) 
+VitiFisher(groups=groups)
