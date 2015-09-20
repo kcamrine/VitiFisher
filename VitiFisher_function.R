@@ -19,7 +19,7 @@ genename.list = "vitis.genenames.txt"
 # this is the variable character in the list of files, could just be one file
 # if you don't have more than one gene list
 #groups <- c("C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11",
-            "C12","C13","C14","C15","C16","C17","C18","C19","C20","C21","C22","C23")
+#            "C12","C13","C14","C15","C16","C17","C18","C19","C20","C21","C22","C23")
 
 groups <- c("DIM1_positive","DIM1_negative","DIM2_positive","DIM2_negative")
 
