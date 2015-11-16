@@ -12,30 +12,30 @@
 ### now lets discuss the input in more detail
 
 # this next file is file a. It never changes unless pathway annotations are updated
-annotation.file = "vitisnet_funcCats_clean.txt"
+ann.file = "vitisnet_funcCats_clean.txt"
 # this next file is file b. It never changes unless gene names change. If they do, then
 # you must also update file a
-genename.list = "vitis.genenames.txt"
+gene.list = "vitis.genenames.txt"
 # this is the variable character in the list of files, could just be one file
 # if you don't have more than one gene list
-#groups <- c("C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11",
-#            "C12","C13","C14","C15","C16","C17","C18","C19","C20","C21","C22","C23")
+# but it NEEDS to be one file per genelist
 
-groups <- c("DIM1_negative")
-
+groups <- c("DIM1_negative","DIM1_positive") #corresponds to "DIM1_negative.txt" and "DIM1_positive.txt"
+exten = "txt" #the extension on the end of your in file(s)
 # change the "paste" command inside the loop to match the filenames, 
-# change the "filename" structure at the end of the loop to match what you want your output to look like
+new_sep = "," #when you output, what will your file look like
 # and you're set... run this bad boy
 ####################
 
 library('plyr')
-VitiFisher <- function(genename.list="vitis.genenames.txt",groups,annotation.file="vitisnet_funcCats_clean.txt"){
+VitiFisher <- function(genename.list=gene.list,groups,annotation.file=ann.file,extension=exten,newfile_sep=new_sep){
     genes.annotations <- read.table(annotation.file,sep="\t",colClasses=rep("character",2),header=F)
+    genes.annotations <- unique(genes.annotations) #load in all annotations (multiple pathways for some genes)
     colnames(genes.annotations) <- c("genename","category")
-    vitis.genenames <- as.character(read.table(genename.list)[,2])
+    vitis.genenames <- as.character(read.table(genename.list)[,2]) #possible genenames
     for(i in 1:length(groups)){
         #    which.genes <- read.table(paste("clusters",groups[i],"genelist.txt",sep="."),header=F,colClasses="character")[,1]
-        which.genes <- read.csv(paste(groups[i],"csv",sep="."),header=F,colClasses="character")[,1]
+        which.genes <- read.csv(paste(groups[i],extension,sep="."),header=F,colClasses="character")[,1]
         which.genes <- as.factor(as.numeric(vitis.genenames %in% which.genes))
         names(which.genes) <- vitis.genenames
         functional.category.counts <- rep(0,length(table(genes.annotations$category)))
@@ -56,19 +56,19 @@ VitiFisher <- function(genename.list="vitis.genenames.txt",groups,annotation.fil
         testlocs <- functional.category.counts[which(functional.category.counts > 0)];
         if(length(testlocs) > 0){
             for(l in 1:length(testlocs)){
-                if(names(testlocs[l]) == "Unknown"){next;}
+                if(names(testlocs[l]) == "Unknown" | names(testlocs[l]) == "unknown"){next;} #unknowns give us no information. 
                 thistest <- names(testlocs[l])
                 in.group <- testlocs[l] #count subset in
                 out.group <- total.gene.count - in.group #count subset out
                 in.genome <- genome.totals[which(names(genome.totals) %in% 
                                                      thistest)] - in.group #count genome in
-                out.genome <- 29971 - total.gene.count - in.genome #count genome out  
+                out.genome <- length(vitis.genenames) - total.gene.count - in.genome #count genome out  
                 fisherset <- matrix(c(in.group,in.genome,out.group,out.genome),
                                     nrow=2,ncol=2)
                 testRes <- fisher.test(fisherset,alternative="greater")
                 if(in.group > 0 & length(sigtallysall) < 1){
-                    sigtallysall <- c(names(in.genome),testRes$p.value,in.group,
-                                      genome.totals[which(names(genome.totals) %in% thistest)])
+                    sigtallysall <- t(data.frame(c(names(in.genome),testRes$p.value,in.group,
+                                      genome.totals[which(names(genome.totals) %in% thistest)])))
                 }else if(in.group > 0){
                     sigtallysall <- rbind(sigtallysall,c(names(in.genome),testRes$p.value,
                                                          in.group,genome.totals[which(names(genome.totals) %in% thistest)]))
@@ -81,7 +81,7 @@ VitiFisher <- function(genename.list="vitis.genenames.txt",groups,annotation.fil
         #    filename = paste("clusters",groups[i],"genelist.enrichments.txt",sep=".")
         filename = paste(groups[i],"enrichments.txt",sep=".")
         sigtallysall <- cbind(sigtallysall,"adjusted.p"=p.adjust(sigtallysall[,2]))
-        write.table(file=filename,sigtallysall)
+        write.table(file=filename,sigtallysall,sep=newfile_sep)
     }
 }
 
